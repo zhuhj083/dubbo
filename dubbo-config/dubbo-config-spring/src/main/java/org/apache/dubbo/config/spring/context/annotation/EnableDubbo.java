@@ -44,8 +44,12 @@ import java.lang.annotation.Target;
 @EnableDubboConfig
 @DubboComponentScan
 public @interface EnableDubbo {
+    //发现EnableDubbo注解其实是EnableDubboConfig跟DubboComponentScan标签的合并
 
     /**
+     *
+     * 用于指定扫描那些包含@Service注解的包(声明后面提到Service注解都是Dubbo的Service注解)
+     *
      * Base packages to scan for annotated @Service classes.
      * <p>
      * Use {@link #scanBasePackageClasses()} for a type-safe alternative to String-based
@@ -58,6 +62,8 @@ public @interface EnableDubbo {
     String[] scanBasePackages() default {};
 
     /**
+     * 用于指定扫描那些包含@service注解的类
+     *
      * Type-safe alternative to {@link #scanBasePackages()} for specifying the packages to
      * scan for annotated @Service classes. The package of each class specified will be
      * scanned.
@@ -70,6 +76,9 @@ public @interface EnableDubbo {
 
 
     /**
+     * 表示是否绑定到多个bean。默认是true
+     * 举例：作用是按照不同的配置文件格式进行选择。比如：dubbo.application跟dubbo.applications之间的区别
+     *
      * It indicates whether {@link AbstractConfig} binding to multiple Spring Beans.
      *
      * @return the default value is <code>false</code>

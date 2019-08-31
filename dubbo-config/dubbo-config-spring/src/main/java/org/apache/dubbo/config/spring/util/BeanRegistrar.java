@@ -28,6 +28,7 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 public class BeanRegistrar {
 
     /**
+     * 注册一个内部使用的Bean
      * Register Infrastructure Bean
      *
      * @param beanDefinitionRegistry {@link BeanDefinitionRegistry}

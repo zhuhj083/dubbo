@@ -94,6 +94,7 @@ public abstract class AnnotatedBeanDefinitionRegistryUtils {
             return;
         }
 
+        // 删除已注册的所有 注解类
         // Remove all annotated-classes that have been registered
         Iterator<Class<?>> iterator = new ArrayList<>(asList(annotatedClasses)).iterator();
 
@@ -104,6 +105,8 @@ public abstract class AnnotatedBeanDefinitionRegistryUtils {
             }
         }
 
+        // 获取AnnotatedBeanDefinitionReader对象，这个对面里面包含了所有的 注释后处理器,
+        // 比如处理有Configuration标签的ConfigurationClassPostProcessor类
         AnnotatedBeanDefinitionReader reader = new AnnotatedBeanDefinitionReader(registry);
 
         if (logger.isDebugEnabled()) {

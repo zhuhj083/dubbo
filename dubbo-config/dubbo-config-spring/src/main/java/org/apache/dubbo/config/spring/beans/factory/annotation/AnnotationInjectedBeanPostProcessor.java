@@ -78,6 +78,7 @@ public abstract class AnnotationInjectedBeanPostProcessor extends
 
     private final Log logger = LogFactory.getLog(getClass());
 
+    // 需要的annotationTypes
     private final Class<? extends Annotation>[] annotationTypes;
 
     private final ConcurrentMap<String, AnnotationInjectedBeanPostProcessor.AnnotatedInjectionMetadata> injectionMetadataCache =
@@ -142,8 +143,13 @@ public abstract class AnnotationInjectedBeanPostProcessor extends
     public PropertyValues postProcessPropertyValues(
             PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeanCreationException {
 
+        // InjectionMetadata metadata是注入元数据 ，包含了
+        //      目标Bean的Class对象
+        //      和注入元素（InjectionElement）的集合
+        // 查找Bean所有标注了指定注解（@Reference）的字段和方法
         InjectionMetadata metadata = findInjectionMetadata(beanName, bean.getClass(), pvs);
         try {
+            // 通过反射来给bean设置值
             metadata.inject(bean, beanName, pvs);
         } catch (BeanCreationException ex) {
             throw ex;
@@ -166,13 +172,15 @@ public abstract class AnnotationInjectedBeanPostProcessor extends
         final List<AnnotationInjectedBeanPostProcessor.AnnotatedFieldElement> elements = new LinkedList<AnnotationInjectedBeanPostProcessor.AnnotatedFieldElement>();
 
         ReflectionUtils.doWithFields(beanClass, field -> {
-
+            // getAnnotationTypes 拿到需要寻找的注解类（@Reference注解）
             for (Class<? extends Annotation> annotationType : getAnnotationTypes()) {
 
+                //合并和解析占位符后，获取AnnotationAttributes注释属性
                 AnnotationAttributes attributes = getMergedAttributes(field, annotationType, getEnvironment(), true);
 
                 if (attributes != null) {
 
+                    // 不能是static方法
                     if (Modifier.isStatic(field.getModifiers())) {
                         if (logger.isWarnEnabled()) {
                             logger.warn("@" + annotationType.getName() + " is not supported on static fields: " + field);
@@ -237,26 +245,41 @@ public abstract class AnnotationInjectedBeanPostProcessor extends
 
 
     private AnnotationInjectedBeanPostProcessor.AnnotatedInjectionMetadata buildAnnotatedMetadata(final Class<?> beanClass) {
+
+        // 获取属性上的指定注解（@Reference注解）
         Collection<AnnotationInjectedBeanPostProcessor.AnnotatedFieldElement> fieldElements = findFieldAnnotationMetadata(beanClass);
+
+        // 获取方法上的指定注解（@Reference注解）
         Collection<AnnotationInjectedBeanPostProcessor.AnnotatedMethodElement> methodElements = findAnnotatedMethodMetadata(beanClass);
+
         return new AnnotationInjectedBeanPostProcessor.AnnotatedInjectionMetadata(beanClass, fieldElements, methodElements);
 
     }
 
     private InjectionMetadata findInjectionMetadata(String beanName, Class<?> clazz, PropertyValues pvs) {
+
+        // 类名作为缓存键，以便与自定义调用者向后兼容。
         // Fall back to class name as cache key, for backwards compatibility with custom callers.
         String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
+
+        // 从缓存中的injectionMetadataCache根据类名获取 AnnotatedInjectionMetadata元数据
         // Quick check on the concurrent map first, with minimal locking.
         AnnotationInjectedBeanPostProcessor.AnnotatedInjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
+
+        // 判断metadata是否需要刷新（metadata为空以及class对象不等于ReferenceInjectionMetadata时，则需要进行刷新）
         if (InjectionMetadata.needsRefresh(metadata, clazz)) {
             synchronized (this.injectionMetadataCache) {
                 metadata = this.injectionMetadataCache.get(cacheKey);
+                // 双重检查机制
                 if (InjectionMetadata.needsRefresh(metadata, clazz)) {
                     if (metadata != null) {
                         metadata.clear(pvs);
                     }
                     try {
+                        // 构建InjectionMetadata元数据
                         metadata = buildAnnotatedMetadata(clazz);
+
+                        // 加入到缓存
                         this.injectionMetadataCache.put(cacheKey, metadata);
                     } catch (NoClassDefFoundError err) {
                         throw new IllegalStateException("Failed to introspect object class [" + clazz.getName() +

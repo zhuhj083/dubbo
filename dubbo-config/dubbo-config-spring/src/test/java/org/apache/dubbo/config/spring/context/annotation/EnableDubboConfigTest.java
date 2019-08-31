@@ -42,6 +42,7 @@ public class EnableDubboConfigTest {
     @Test
     public void testSingle() {
 
+        //等价于 AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         context.register(TestConfig.class);
         context.refresh();

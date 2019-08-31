@@ -18,13 +18,12 @@ package org.apache.dubbo.config.spring.context.annotation;
 
 import org.apache.dubbo.config.AbstractConfig;
 
+import org.apache.dubbo.config.spring.util.AnnotatedBeanDefinitionRegistryUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
-
-import static org.apache.dubbo.config.spring.util.AnnotatedBeanDefinitionRegistryUtils.registerBeans;
 
 /**
  * Dubbo {@link AbstractConfig Config} {@link ImportBeanDefinitionRegistrar register}, which order can be configured
@@ -39,16 +38,21 @@ public class DubboConfigConfigurationRegistrar implements ImportBeanDefinitionRe
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
+        // 从importingClassMetadata对象（这个对象中包含启动类上的标签和其他信息）中获取EnableDubboConfig标签中的属性，
+        // 并保存在map中然后封装到AnnotationAttributes中
+        // AnnotationAttributes 是LinkedHashMap的子类
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboConfig.class.getName()));
 
+        //获取EnableDubboConfig标签中的multiple属性
         boolean multiple = attributes.getBoolean("multiple");
 
+        //根据是否绑定到多个Bean分情况处理，并注册Bean
         // Single Config Bindings
-        registerBeans(registry, DubboConfigConfiguration.Single.class);
+        AnnotatedBeanDefinitionRegistryUtils.registerBeans(registry, DubboConfigConfiguration.Single.class);
 
         if (multiple) { // Since 2.6.6 https://github.com/apache/dubbo/issues/3193
-            registerBeans(registry, DubboConfigConfiguration.Multiple.class);
+            AnnotatedBeanDefinitionRegistryUtils.registerBeans(registry, DubboConfigConfiguration.Multiple.class);
         }
     }
 

@@ -29,6 +29,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ *
+ * 扫描classpath类路径，查找带有@Service和@Reference注解的类，
+ * 并将其自动注册为Spring beans
+ *
  * Dubbo Component Scan {@link Annotation},scans the classpath for annotated components that will be auto-registered as
  * Spring beans. Dubbo-provided {@link Service} and {@link Reference}.
  *

@@ -54,10 +54,14 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
+        // 根据importingClassMetadata找到贴有DubboComponentScan注解的类的信息，
+        // 从中获取需要扫描的包
         Set<String> packagesToScan = getPackagesToScan(importingClassMetadata);
 
+        // 注册ServiceAnnotationBeanPostProcessor，会传入packagesToScan作为构造器参数
         registerServiceAnnotationBeanPostProcessor(packagesToScan, registry);
 
+        // 注册ReferenceAnnotationBeanPostProcessor
         registerReferenceAnnotationBeanPostProcessor(registry);
 
     }
@@ -72,8 +76,11 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
     private void registerServiceAnnotationBeanPostProcessor(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
 
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceAnnotationBeanPostProcessor.class);
+        //将packagesToScan当做一个构造器参数传入
         builder.addConstructorArgValue(packagesToScan);
+        //int ROLE_INFRASTRUCTURE = 2 表示完全内部使用
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
+
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
         BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinition, registry);
 
@@ -87,6 +94,7 @@ public class DubboComponentScanRegistrar implements ImportBeanDefinitionRegistra
     private void registerReferenceAnnotationBeanPostProcessor(BeanDefinitionRegistry registry) {
 
         // Register @Reference Annotation Bean Processor
+        // BEAN_NAME : referenceAnnotationBeanPostProcessor
         BeanRegistrar.registerInfrastructureBean(registry,
                 ReferenceAnnotationBeanPostProcessor.BEAN_NAME, ReferenceAnnotationBeanPostProcessor.class);
 

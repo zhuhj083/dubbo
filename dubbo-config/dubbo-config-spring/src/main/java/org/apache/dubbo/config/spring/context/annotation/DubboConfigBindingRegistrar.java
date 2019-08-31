@@ -65,6 +65,7 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
+
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboConfigBinding.class.getName()));
 
@@ -74,12 +75,17 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
 
     protected void registerBeanDefinitions(AnnotationAttributes attributes, BeanDefinitionRegistry registry) {
 
+        // 获取EnableDubboConfigBinding注解中的prefix属性的占位符
+        // 例如prefix=dubbo.application则这里最后prefix值为dubbo.application
         String prefix = environment.resolvePlaceholders(attributes.getString("prefix"));
 
+        // 获取EnableDubboConfigBinding注解中的type表示的对象的Class对象
         Class<? extends AbstractConfig> configClass = attributes.getClass("type");
 
+        // 获取EnableDubboConfigBinding注解中的multiple属性
         boolean multiple = attributes.getBoolean("multiple");
 
+        //注册Dubbo的ConfigBean
         registerDubboConfigBeans(prefix, configClass, multiple, registry);
 
     }
@@ -89,6 +95,8 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
                                           boolean multiple,
                                           BeanDefinitionRegistry registry) {
 
+        // 获取环境变量中的所有属性，并找到前缀为prefix的所有的属性集合；
+        // 例如 dubbo.application.name=dubbo-service，则properties中的值为 name：dubbo-service
         Map<String, Object> properties = getSubProperties(environment.getPropertySources(), prefix);
 
         if (CollectionUtils.isEmpty(properties)) {
@@ -99,17 +107,24 @@ public class DubboConfigBindingRegistrar implements ImportBeanDefinitionRegistra
             return;
         }
 
+        //
         Set<String> beanNames = multiple ? resolveMultipleBeanNames(properties) :
                 Collections.singleton(resolveSingleBeanName(properties, configClass, registry));
 
+        //遍历beanNames
         for (String beanName : beanNames) {
 
+            //使用beanName作为创建的configClass类型Bean的Name
             registerDubboConfigBean(beanName, configClass, registry);
 
+            // 注册DubboConfigBindingBeanPostProcessor，
+            // 这里使用BeanDefinitionBuilder来创建Bean，并将prefix跟beanName加到Bean的构造器参数列表中，
+            // 这里会注册多个这个Bean只是构造参数不同
             registerDubboConfigBindingBeanPostProcessor(prefix, beanName, multiple, registry);
 
         }
 
+        //注册namePropertyDefaultValueDubboConfigBeanCustomizer
         registerDubboConfigBeanCustomizers(registry);
 
     }
